@@ -14,5 +14,6 @@ test_python:
     image: python:3.9-slim
     script:
         - cd ./service-python-main
+        - pip install -r requirements.txt
         - python test_app.py
         
