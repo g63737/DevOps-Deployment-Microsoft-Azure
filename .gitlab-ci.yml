@@ -1,5 +1,6 @@
 stages:
     - build
+    - test
 
 compile_python:
     stage: build
@@ -8,4 +9,10 @@ compile_python:
         - cd ./service-python-main
         - pip install -r requirements.txt
 
+test_python:
+    stage: test
+    image: python:3.9-slim
+    script:
+        - cd ./service-python-main
+        - python test_app.py
         
