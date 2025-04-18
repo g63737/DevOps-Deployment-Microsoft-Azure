@@ -8,6 +8,7 @@ WORKDIR /app
 COPY requirements.txt app.py test_app.py /app/
 
 RUN pip install -r requirements.txt
+RUN python test_app.py
 
 EXPOSE 5000
 

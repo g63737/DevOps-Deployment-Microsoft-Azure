@@ -3,7 +3,7 @@ FROM maven:3.9.4-eclipse-temurin-17 AS builder
 
 WORKDIR /app
 COPY . .
-RUN mvn clean package -DskipTests
+RUN mvn clean compile test package 
 
 # Étape 2 — Exécution avec une image Java plus légère
 FROM eclipse-temurin:17-jdk-jammy
