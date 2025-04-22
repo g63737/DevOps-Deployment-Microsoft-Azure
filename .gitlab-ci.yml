@@ -16,4 +16,17 @@ test_python:
         - cd ./service-python-main
         - pip install -r requirements.txt
         - python test_app.py
-        
+
+compile_java:
+  stage: build
+  image: maven:3.9.4-eclipse-temurin-17
+  script:
+    - cd ./service-java-main 
+    - mvn compile
+
+test_java:
+  stage: test
+  image: maven:3.9.4-eclipse-temurin-17
+  script:
+    - cd ./service-java-main
+    - mvn test 
