@@ -17,14 +17,14 @@ test_python:
         - pip install -r requirements.txt
         - python test_app.py
 
-compile_java:
+compile_Java:
   stage: build
   image: maven:3.9.4-eclipse-temurin-17
   script:
     - cd ./service-java-main 
     - mvn compile
 
-test_java:
+test_Java:
   stage: test
   image: maven:3.9.4-eclipse-temurin-17
   script:
