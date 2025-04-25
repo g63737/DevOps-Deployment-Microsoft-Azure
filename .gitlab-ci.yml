@@ -2,6 +2,8 @@ stages:
     - build
     - test
     - infrastructure
+    - docker_build
+    - deploy
 
 compile_python:
     stage: build
@@ -41,7 +43,25 @@ infrastructure_terraform:
     - cd ./terraform
     - terraform init
     - terraform apply --auto-approve
-    
+
+docker_build:
+  stage: docker
+  image: docker:20.10.16
+  services:
+    - docker:20.10.16-dind
+  before_script:
+    - echo $DOCKER_PASSWORD | docker login myacrregistry63737.azurecr.io -u myacrregistry63737 --password-stdin
+  script:
+    - cd service-python-main
+    - docker build -t myacrregistry63737.azurecr.io/python-service:latest .
+    - docker push myacrregistry63737.azurecr.io/python-service:latest
+    - cd ../service-java-main
+    - docker build -t myacrregistry63737.azurecr.io/java-service:latest .
+    - docker push myacrregistry63737.azurecr.io/java-service:latest
+  variables:
+    DOCKER_TLS_CERTDIR: "/certs"
+
+
 
 
 
