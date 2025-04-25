@@ -1,6 +1,7 @@
 stages:
     - build
     - test
+    - infrastructure
 
 compile_python:
     stage: build
@@ -30,3 +31,15 @@ test_Java:
   script:
     - cd ./service-java-main
     - mvn test 
+
+infrastructure_terraform:
+  stage: infrastructure
+  image: hashicorp/terraform:1.3.9
+  script:
+    - cd ./terraform
+    - terraform init
+    - terraform apply
+
+
+
+
