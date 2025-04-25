@@ -40,7 +40,7 @@ infrastructure_terraform:
   script:
     - cd ./terraform
     - terraform init
-    - terraform apply -- auto-approve
+    - terraform apply --auto-approve
     
 
 
