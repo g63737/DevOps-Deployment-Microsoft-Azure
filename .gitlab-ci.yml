@@ -34,8 +34,9 @@ test_Java:
 
 infrastructure_terraform:
   stage: infrastructure
-  image: hashicorp/terraform:1.3.9
-    entrypoint:[""]
+  image: 
+    name: hashicorp/terraform:1.3.9
+    entrypoint: [""]
   script:
     - cd ./terraform
     - terraform init
