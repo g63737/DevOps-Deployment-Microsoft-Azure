@@ -8,9 +8,9 @@ shutdown_timeout = 0
 [[runners]]
   name = "docker-runner"
   url = "https://git.esi-bru.be"
-  id = 793
-  token = "glrt-Bj_c8JnFthhy36CyUySt"
-  token_obtained_at = 2025-04-18T15:11:42Z
+  id = 927
+  token = "glrt-ymM_N_CDtCGsJ2Wr-Zux"
+  token_obtained_at = 2025-04-25T15:15:24Z
   token_expires_at = 0001-01-01T00:00:00Z
   executor = "docker"
   [runners.cache]
@@ -21,10 +21,10 @@ shutdown_timeout = 0
   [runners.docker]
     tls_verify = false
     image = "alpine:latest"
-    privileged = false
+    privileged = true
     disable_entrypoint_overwrite = false
     oom_kill_disable = false
     disable_cache = false
-    volumes = ["/cache"]
+    volumes = ["/var/run/docker.sock:/var/run/docker.sock", "/certs/client", "/cache"]
     shm_size = 0
     network_mtu = 0
