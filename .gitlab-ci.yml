@@ -10,6 +10,10 @@ compile_python:
     script:
         - cd ./service-python-main
         - pip install -r requirements.txt
+    artifacts:
+      paths:
+      - ./service-python-main/target/  # Conserver le dossier target
+      expire_in: 1h  # L'artifact est supprimé après 1 heure
 
 test_python:
     stage: test
@@ -27,7 +31,7 @@ compile_Java:
     - mvn compile
   artifacts:
     paths:
-      - target/  # Conserver le dossier target
+      - ./service-java-main/target/  # Conserver le dossier target
     expire_in: 1h  # L'artifact est supprimé après 1 heure
 
 test_Java:
