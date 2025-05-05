@@ -25,6 +25,10 @@ compile_Java:
   script:
     - cd ./service-java-main
     - mvn compile
+  artifacts:
+    paths:
+      - target/  # Conserver le dossier target
+    expire_in: 1h  # L'artifact est supprimé après 1 heure
 
 test_Java:
   stage: test
