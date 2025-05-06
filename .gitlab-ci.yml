@@ -12,7 +12,7 @@ compile_python:
         - pip install -r requirements.txt
     artifacts:
       paths:
-      - ./service-python-main/target/  # Conserver le dossier target
+      - ./service-python-main 
       expire_in: 1h  # L'artifact est supprimé après 1 heure
 
 test_python:
