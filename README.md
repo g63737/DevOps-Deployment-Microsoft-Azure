@@ -578,7 +578,7 @@ Grâce aux variables d'environnement configurées dans CI/CD, le pipeline peut :
 4. Construire et pousser les images Docker
 5. Les applications Web déployées utiliseront automatiquement ces images
 
-### Vérification du déploiement
+## Vérification du déploiement
 
 Une fois le pipeline terminé, les applications sont accessibles via les URLs suivantes (obtenues dans les sorties Terraform) :
 
@@ -590,24 +590,6 @@ https://mon-app-python-63737.azurewebsites.net/api/message
 # Service Java
 https://mon-app-java-63737.azurewebsites.net/proxy
 # Doit retourner : Hello from Flask!
-```
-
-## Vérification du déploiement
-
-Après le déploiement, vérifiez que les services sont accessibles :
-
-```bash
-# Récupérer les URLs des applications
-PYTHON_APP_URL=$(terraform output -raw web_app_url_python)
-JAVA_APP_URL=$(terraform output -raw web_app_url_java)
-
-# Tester le service Python
-curl $PYTHON_APP_URL
-# Devrait retourner : {"message":"Hello from Flask!"}
-
-# Tester le service Java
-curl $JAVA_APP_URL
-# Devrait retourner : Hello from Flask!
 ```
 
 ## Nettoyage des ressources
