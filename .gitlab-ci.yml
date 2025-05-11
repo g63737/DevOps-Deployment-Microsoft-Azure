@@ -9,10 +9,10 @@ compile_python:
     image: python:3.9-slim
     script:
         - cd ./service-python-main
-        - pip install -r requirements.txt
-    artifacts:
+        - pip install -r requirements.txt # Installe les dépendances
+    artifacts:  # Configuration pour préserver les fichiers entre les jobs
       paths:
-      - ./service-python-main 
+      - ./service-python-main # Conserve tout le répertoire
       expire_in: 1h  # L'artifact est supprimé après 1 heure
 
 test_python:
@@ -20,7 +20,7 @@ test_python:
     image: python:3.9-slim
     script:
         - cd ./service-python-main
-        - pip install -r requirements.txt
+        - pip install -r requirements.txt # Réinstalle les dépendances
         - python test_app.py
 
 compile_Java:
@@ -28,7 +28,7 @@ compile_Java:
   image: maven:3.9.4-eclipse-temurin-17
   script:
     - cd ./service-java-main
-    - mvn compile
+    - mvn compile # Compile le code source Java
   artifacts:
     paths:
       - ./service-java-main/target/  # Conserver le dossier target
@@ -44,29 +44,33 @@ test_Java:
 infrastructure_terraform:
   stage: infrastructure
   image:
-    name: hashicorp/terraform:1.3.9
-    entrypoint: [""]
+    name: hashicorp/terraform:1.3.9 # Image officielle Terraform
+    entrypoint: [""] # Reset l'entrypoint pour permettre l'exécution de scripts personnalisés
   script:
     - cd ./terraform
-    - terraform init
-    - terraform apply --auto-approve
+    - terraform init # Initialise Terraform (télécharge les providers)
+    - terraform apply --auto-approve 
     
 docker_build:
   stage: deploy
-  image: docker:20.10.16
+  image: docker:20.10.16 # Image avec le client Docker
   services:
-    - docker:20.10.16-dind
+    - docker:20.10.16-dind # Service Docker-in-Docker pour construire des images
   before_script:
+    # Installation de l'Azure CLI et ses dépendances
     - apk add --no-cache py3-pip gcc musl-dev python3-dev libffi-dev openssl-dev cargo make
     - pip install azure-cli
+    # Authentification à Azure et au registre de conteneurs
     - az login --service-principal -u "$ARM_CLIENT_ID" -p "$ARM_CLIENT_SECRET" --tenant "$ARM_TENANT_ID"
     - az acr login --name myacrregistry63737
   script:
+    # Construction et publication de l'image Python
     - cd service-python-main
     - docker build -t myacrregistry63737.azurecr.io/python-service:latest .
     - docker push myacrregistry63737.azurecr.io/python-service:latest
+    # Construction et publication de l'image Java
     - cd ../service-java-main
     - docker build -t myacrregistry63737.azurecr.io/java-service:latest .
     - docker push myacrregistry63737.azurecr.io/java-service:latest
   variables:
-    DOCKER_TLS_CERTDIR: "/certs"
+    DOCKER_TLS_CERTDIR: "/certs" # Configuration de sécurité pour Docker-in-Docker
