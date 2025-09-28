@@ -1,28 +1,28 @@
-# Déploiement de Microservices sur Azure avec Docker et Terraform
+# Microservices Deployment on Azure with Docker and Terraform
 
-Ce projet démontre comment déployer deux microservices (un en Python Flask et un en Java Spring Boot) sur Microsoft Azure en utilisant Docker pour la conteneurisation et Terraform pour la gestion de l'infrastructure.
+This project demonstrates how to deploy two microservices (one in Python Flask and one in Java Spring Boot) on Microsoft Azure using Docker for containerization and Terraform for infrastructure management.
 
-## Table des matières
+## Table of Contents
 
-- [Prérequis](#prérequis)
-- [Structure du projet](#structure-du-projet)
-- [Partie 1 : Conteneurisation des applications](#partie-1--conteneurisation-des-applications)
-- [Partie 2 : Pipeline CI](#partie-2--pipeline-ci)
-- [Partie 3 : Infrastructure Azure avec Terraform](#partie-3--infrastructure-azure-avec-terraform)
-- [Partie 4 : Automatisation du déploiement](#partie-4--automatisation-du-déploiement)
-- [Description des fichiers Terraform](#description-des-fichiers-terraform)
-- [Nettoyage des ressources](#nettoyage-des-ressources)
+- [Prerequisites](#prerequisites)
+- [Project Structure](#project-structure)
+- [Part 1: Application Containerization](#part-1-application-containerization)
+- [Part 2: CI Pipeline](#part-2-ci-pipeline)
+- [Part 3: Azure Infrastructure with Terraform](#part-3-azure-infrastructure-with-terraform)
+- [Part 4: Deployment Automation](#part-4-deployment-automation)
+- [Terraform Files Description](#terraform-files-description)
+- [Resource Cleanup](#resource-cleanup)
 
-## Prérequis
+## Prerequisites
 
-- Docker et Docker Compose
+- Docker and Docker Compose
 - Git
 - Azure CLI
 - Terraform
-- Un compte Azure avec des crédits disponibles
-- GitLab Runner (pour l'exécution du pipeline CI/CD)
+- An Azure account with available credits
+- GitLab Runner (for CI/CD pipeline execution)
 
-## Structure du projet
+## Project Structure
 
 ```
 .
@@ -46,25 +46,25 @@ Ce projet démontre comment déployer deux microservices (un en Python Flask et 
     └── providers.tf
 ```
 
-## Partie 1 : Conteneurisation des applications
+## Part 1: Application Containerization
 
-### Service Python (Flask)
+### Python Service (Flask)
 
-1. Créer le Dockerfile pour le service Python :
+1. Create the Dockerfile for the Python service:
 
 ```bash
 cd service-python-main
 ```
 
-Le contenu du Dockerfile :
+Dockerfile content:
 ```dockerfile
-# Utiliser une image officielle Python légère
+# Use an official lightweight Python image
 FROM python:3.10-slim
 
-# Définir le dossier de travail dans le conteneur
+# Set the working directory in the container
 WORKDIR /app
 
-# Copier uniquement les fichiers nécessaires
+# Copy only necessary files
 COPY requirements.txt app.py test_app.py /app/
 
 RUN pip install -r requirements.txt
@@ -72,39 +72,39 @@ RUN python test_app.py
 
 EXPOSE 5000
 
-# Commande par défaut : exécute app.py
+# Default command: run app.py
 CMD ["python", "app.py"]
 ```
 
-2. Construire l'image Docker :
+2. Build the Docker image:
 
 ```bash
 docker build -t python-service:latest .
 ```
 
-### Service Java (Spring Boot)
+### Java Service (Spring Boot)
 
-1. Créer le Dockerfile pour le service Java :
+1. Create the Dockerfile for the Java service:
 
 ```bash
 cd ../service-java-main
 ```
 
-Le contenu du Dockerfile :
+Dockerfile content:
 ```dockerfile
-# Étape 1 — Build du .jar avec Maven
+# Stage 1 — Build the .jar with Maven
 FROM maven:3.9.4-eclipse-temurin-17 AS builder
 
 WORKDIR /app
 COPY . .
 RUN mvn clean compile test package 
 
-# Étape 2 — Exécution avec une image Java plus légère
+# Stage 2 — Execution with a lighter Java image
 FROM eclipse-temurin:17-jdk-jammy
 
 WORKDIR /app
 
-# On récupère juste le .jar compilé depuis l'étape précédente
+# Get only the compiled .jar from the previous stage
 COPY --from=builder /app/target/*.jar app.jar
 
 ENV FLASK_URL=http://container-python:5000
@@ -114,15 +114,15 @@ EXPOSE 8080
 CMD ["java", "-jar", "app.jar"]
 ```
 
-2. Construire l'image Docker :
+2. Build the Docker image:
 
 ```bash
 docker build -t java-service:latest .
 ```
 
-### Configuration Docker Compose
+### Docker Compose Configuration
 
-Créer un fichier docker-compose.yml à la racine du projet :
+Create a docker-compose.yml file at the project root:
 
 ```yaml
 version: '3.9'
@@ -131,7 +131,7 @@ services:
   container-python:
     build:
       context: ./service-python-main/
-    container-name: container-python
+    container_name: container-python
     ports:
       - "5000:5000"
     networks:
@@ -140,7 +140,7 @@ services:
   container-java:
     build:
       context: ./service-java-main/
-    container-name: container-java
+    container_name: container-java
     ports:
       - "8080:8080"
     environment:
@@ -155,22 +155,22 @@ networks:
     driver: bridge
 ```
 
-### Lancer les services avec Docker Compose
+### Launch Services with Docker Compose
 
 ```bash
 docker-compose up -d
 ```
 
-### Vérifier le fonctionnement des services
+### Verify Service Functionality
 
-- Service Python : http://localhost:5000/api/message
-  - Doit retourner : `{"message":"Hello from Flask!"}`
-- Service Java : http://localhost:8080/proxy
-  - Doit afficher : `Hello from Flask!`
+- Python Service: http://localhost:5000/api/message
+  - Should return: `{"message":"Hello from Flask!"}`
+- Java Service: http://localhost:8080/proxy
+  - Should display: `Hello from Flask!`
 
-## Partie 2 : Pipeline CI
+## Part 2: CI Pipeline
 
-Créer un fichier `.gitlab-ci.yml` à la racine du projet pour configurer le pipeline :
+Create a `.gitlab-ci.yml` file at the project root to configure the pipeline:
 
 ```yaml
 stages:
@@ -188,7 +188,7 @@ compile_python:
     artifacts:
       paths:
       - ./service-python-main 
-      expire_in: 1h  # L'artifact est supprimé après 1 heure
+      expire_in: 1h  # Artifact is deleted after 1 hour
 
 test_python:
     stage: test
@@ -206,8 +206,8 @@ compile_Java:
     - mvn compile
   artifacts:
     paths:
-      - ./service-java-main/target/  # Conserver le dossier target
-    expire_in: 1h  # L'artifact est supprimé après 1 heure
+      - ./service-java-main/target/  # Preserve the target folder
+    expire_in: 1h  # Artifact is deleted after 1 hour
 
 test_Java:
   stage: test
@@ -217,17 +217,17 @@ test_Java:
     - mvn test
 ```
 
-Ce pipeline complet effectue :
-1. La compilation des services Python et Java
-2. L'exécution des tests unitaires pour chaque service
+This complete pipeline performs:
+1. Compilation of Python and Java services
+2. Execution of unit tests for each service
 
-## Partie 3 : Infrastructure Azure avec Terraform
+## Part 3: Azure Infrastructure with Terraform
 
-Cette partie couvre la création manuelle des fichiers Terraform qui définiront notre infrastructure.
+This part covers the manual creation of Terraform files that will define our infrastructure.
 
-### Créer les fichiers Terraform
+### Create Terraform Files
 
-1. Créer un fichier `providers.tf` :
+1. Create a `providers.tf` file:
 
 ```hcl
 terraform {
@@ -244,7 +244,7 @@ provider "azurerm" {
 }
 ```
 
-2. Créer un fichier `variables.tf` :
+2. Create a `variables.tf` file:
 
 ```hcl
 variable "location" {
@@ -314,7 +314,7 @@ variable "web_app_java" {
 }
 ```
 
-3. Créer un fichier `main.tf` :
+3. Create a `main.tf` file:
 
 ```hcl
 # Resource Group
@@ -403,33 +403,34 @@ resource "azurerm_linux_web_app" "app-java" {
 }
 ```
 
-4. Créer un fichier `outputs.tf` :
+4. Create an `outputs.tf` file:
 
 ```hcl
 output "container_registry_login_server" {
-  description = "Adresse du registre ACR"
+  description = "ACR registry address"
   value       = azurerm_container_registry.acr.login_server
 }
 
 output "web_app_url_java" {
-  description = "URL complète de l'application java"
+  description = "Complete URL of the Java application"
   value       = "https://${azurerm_linux_web_app.app-java.default_hostname}/proxy"
 }
 
 output "web_app_url_python" {
-  description = "URL complète de l'application python"
+  description = "Complete URL of the Python application"
   value       = "https://${azurerm_linux_web_app.app-python.default_hostname}/api/message"
 }
 ```
-## Description des fichiers Terraform
 
-Notre infrastructure est définie par plusieurs fichiers Terraform, chacun ayant un rôle spécifique :
+## Terraform Files Description
+
+Our infrastructure is defined by several Terraform files, each with a specific role:
 
 ### providers.tf
-Ce fichier configure le fournisseur Azure qui sera utilisé par Terraform :
-- Spécifie la source du fournisseur `azurerm` et sa version exacte (4.26.0)
-- Configure les fonctionnalités de base du fournisseur Azure
-- Permet à Terraform de communiquer avec l'API Azure
+This file configures the Azure provider that will be used by Terraform:
+- Specifies the source of the `azurerm` provider and its exact version (4.26.0)
+- Configures basic Azure provider features
+- Allows Terraform to communicate with the Azure API
 
 ```hcl
 terraform {
@@ -447,54 +448,54 @@ provider "azurerm" {
 ```
 
 ### variables.tf
-Ce fichier définit toutes les variables qui seront utilisées dans la configuration :
-- Emplacement Azure (région)
-- Noms des différentes ressources (groupe de ressources, registre de conteneurs, etc.)
-- Configuration des services (ports, noms des images Docker, etc.)
-- Sert à centraliser les valeurs configurables et faciliter la réutilisation
+This file defines all variables that will be used in the configuration:
+- Azure location (region)
+- Names of different resources (resource group, container registry, etc.)
+- Service configuration (ports, Docker image names, etc.)
+- Centralizes configurable values and facilitates reuse
 
-Chaque variable est définie avec :
-- Une description claire
-- Un type (string, number, etc.)
-- Une valeur par défaut qui sera utilisée si aucune valeur n'est fournie
+Each variable is defined with:
+- A clear description
+- A type (string, number, etc.)
+- A default value that will be used if no value is provided
 
 ### main.tf
-Fichier principal qui définit toutes les ressources Azure à créer :
-- Groupe de ressources : conteneur logique pour toutes les ressources Azure
-- Azure Container Registry (ACR) : stocke les images Docker
-- Identité managée : permet l'authentification sécurisée entre services
-- Attribution de rôle : donne les permissions d'accès au registre
-- Plan App Service : définit les caractéristiques du serveur (B1 = Basic)
-- App Web Linux (x2) : déploie les deux applications conteneurisées
-  - Configuration des conteneurs
-  - Configuration des variables d'environnement
-  - Configuration de l'identité
-  - Configuration réseau
+Main file that defines all Azure resources to create:
+- Resource group: logical container for all Azure resources
+- Azure Container Registry (ACR): stores Docker images
+- Managed identity: enables secure authentication between services
+- Role assignment: grants registry access permissions
+- App Service plan: defines server characteristics (B1 = Basic)
+- Linux Web App (x2): deploys both containerized applications
+  - Container configuration
+  - Environment variables configuration
+  - Identity configuration
+  - Network configuration
 
-Ce fichier constitue le cœur de l'infrastructure et définit comment les services interagissent entre eux.
+This file constitutes the infrastructure core and defines how services interact with each other.
 
 ### outputs.tf
-Ce fichier définit les informations qui seront affichées après le déploiement :
-- URL du serveur de connexion du registre ACR
-- URL complète de l'application Java
-- URL complète de l'application Python
+This file defines information that will be displayed after deployment:
+- ACR registry login server URL
+- Complete Java application URL
+- Complete Python application URL
 
-Ces informations sont essentielles pour accéder aux services déployés et vérifier leur bon fonctionnement.
+This information is essential for accessing deployed services and verifying their proper functioning.
 
-Dans cette étape, nous avons préparé les fichiers Terraform pour définir l'infrastructure, mais nous ne déployons pas encore cette infrastructure. Le déploiement effectif avec Terraform sera réalisé dans la partie 4 avec l'automatisation CI/CD.
+In this step, we prepared the Terraform files to define the infrastructure, but we haven't deployed this infrastructure yet. The actual deployment with Terraform will be performed in part 4 with CI/CD automation.
 
-## Partie 4 : Automatisation du déploiement
+## Part 4: Deployment Automation
 
-Dans cette partie, nous automatisons le déploiement de l'infrastructure et des applications en intégrant les étapes Terraform et Docker dans notre pipeline CI/CD.
+In this part, we automate infrastructure and application deployment by integrating Terraform and Docker steps into our CI/CD pipeline.
 
-### Mise à jour du fichier .gitlab-ci.yml
+### Update .gitlab-ci.yml File
 
-Nous avons ajouté deux nouveaux stages au pipeline :
-- `infrastructure` : pour déployer l'infrastructure Azure avec Terraform
-- `deploy` : pour construire et déployer les images Docker
+We added two new stages to the pipeline:
+- `infrastructure`: to deploy Azure infrastructure with Terraform
+- `deploy`: to build and deploy Docker images
 
 ```yaml
-# Ajout des stages infrastructure et deploy
+# Adding infrastructure and deploy stages
 infrastructure_terraform:
   stage: infrastructure
   image:
@@ -511,7 +512,7 @@ docker_build:
   services:
     - docker:20.10.16-dind
   before_script:
-     - apk add --no-cache py3-pip gcc musl-dev python3-dev libffi-dev openssl-dev cargo make
+    - apk add --no-cache py3-pip gcc musl-dev python3-dev libffi-dev openssl-dev cargo make
     - pip install azure-cli
     - az login --service-principal -u "$ARM_CLIENT_ID" -p "$ARM_CLIENT_SECRET" --tenant "$ARM_TENANT_ID"
     - az acr login --name myacrregistry63737
@@ -525,43 +526,44 @@ docker_build:
   variables:
     DOCKER_TLS_CERTDIR: "/certs"
 ```
-### Configuration de l'infrastructure terraform
 
-1. Image : Utilise l'image officielle de Terraform, avec une configuration personnalisée de l'entrypoint pour éviter les conflits avec GitLab CI.  
+### Terraform Infrastructure Configuration
 
-2. Variables d'environnement : Dans les paramètres CI/CD de GitLab, j'ai ajouté les variables suivantes :
+1. Image: Uses the official Terraform image, with a custom entrypoint configuration to avoid conflicts with GitLab CI.
 
-- `ARM_CLIENT_ID` : ID client Azure pour l'authentification Terraform
-- `ARM_CLIENT_SECRET` : Secret client Azure pour l'authentification Terraform
-- `ARM_SUBSCRIPTION_ID` : ID de l'abonnement Azure 
-- `ARM_TENANT_ID` : ID du tenant Azure
-- `DOCKER_PASSWORD` : Mot de passe admin du registre ACR
+2. Environment variables: In GitLab CI/CD settings, I added the following variables:
 
-Ces variables sont utilisées par le pipeline pour se connecter aux services Azure et déployer les ressources.
+- `ARM_CLIENT_ID`: Azure client ID for Terraform authentication
+- `ARM_CLIENT_SECRET`: Azure client secret for Terraform authentication
+- `ARM_SUBSCRIPTION_ID`: Azure subscription ID
+- `ARM_TENANT_ID`: Azure tenant ID
+- `DOCKER_PASSWORD`: ACR registry admin password
 
-3. Commandes Terraform:
+These variables are used by the pipeline to connect to Azure services and deploy resources.
+
+3. Terraform commands:
 ```
-terraform init : Initialise le répertoire de travail  
-terraform validate : Vérifie la syntaxe des fichiers de configuration  
-terraform plan : Crée un plan d'exécution  
-terraform apply --auto-approve : Applique le plan sans demander de confirmation  
+terraform init: Initializes the working directory
+terraform validate: Checks configuration file syntax
+terraform plan: Creates an execution plan
+terraform apply --auto-approve: Applies the plan without asking for confirmation
 ```
 
-### Configuration du GitLab Runner pour Docker-in-Docker
+### GitLab Runner Configuration for Docker-in-Docker
 
-Pour exécuter Docker dans notre pipeline CI/CD, nous avons configuré un GitLab Runner avec Docker-in-Docker :
+To run Docker in our CI/CD pipeline, we configured a GitLab Runner with Docker-in-Docker:
 
-Sur Windows :
+On Windows:
 ```bash
 docker run -d ^
   --name gitlab-runner ^
   --restart always ^
-  -v chemin_absolu_vers_la_configuration\gitlab-runner\config:/etc/gitlab-runner ^
+  -v absolute_path_to_config\gitlab-runner\config:/etc/gitlab-runner ^
   -v /var/run/docker.sock:/var/run/docker.sock ^
   gitlab/gitlab-runner:latest
 
 docker run --rm ^
-  -v chemin_absolu_vers_la_configuration\gitlab-runner\config:/etc/gitlab-runner ^
+  -v absolute_path_to_config\gitlab-runner\config:/etc/gitlab-runner ^
   gitlab/gitlab-runner register ^
     --non-interactive ^
     --url "https://git.esi-bru.be" ^
@@ -572,30 +574,30 @@ docker run --rm ^
     --docker-volumes /var/run/docker.sock:/var/run/docker.sock
 ```
 
-### Connexion à Azure et déploiement
+### Azure Connection and Deployment
 
-Grâce aux variables d'environnement configurées dans CI/CD, le pipeline peut :
-1. Se connecter à Azure via Terraform
-2. Déployer automatiquement l'infrastructure
-3. Se connecter au registre ACR
-4. Construire et pousser les images Docker
-5. Les applications Web déployées utiliseront automatiquement ces images
+Thanks to the environment variables configured in CI/CD, the pipeline can:
+1. Connect to Azure via Terraform
+2. Automatically deploy the infrastructure
+3. Connect to the ACR registry
+4. Build and push Docker images
+5. Deployed Web Apps will automatically use these images
 
-## Vérification du déploiement
+## Deployment Verification
 
-Une fois le pipeline terminé, les applications sont accessibles via les URLs suivantes (obtenues dans les sorties Terraform) :
+Once the pipeline is complete, applications are accessible via the following URLs (obtained from Terraform outputs):
 
 ```bash
-# Service Python
+# Python Service
 https://mon-app-python-63737.azurewebsites.net/api/message
-# Doit retourner : {"message":"Hello from Flask!"}
+# Should return: {"message":"Hello from Flask!"}
 
-# Service Java
+# Java Service
 https://mon-app-java-63737.azurewebsites.net/proxy
-# Doit retourner : Hello from Flask!
+# Should return: Hello from Flask!
 ```
 
-## Nettoyage des ressources
+## Resource Cleanup
 
-Pour économiser nos crédits Azure, il est utile de détuire l'infrastructure lorsqu'elle n'est plus nécessaire.  
-Cependant, le shell n'a pas les fichiers de configuration terraform à jour car le déploiement a été effectuée dans la pipeline. Il faut donc aller manuellement supprimer le groupe de ressources sur le portail Azure.
+To save Azure credits, it's useful to destroy the infrastructure when it's no longer needed.
+However, the shell doesn't have the updated terraform configuration files since deployment was performed in the pipeline. You must therefore manually delete the resource group on the Azure portal.
